@@ -6,7 +6,7 @@ A full-stack library management app built with React, NestJS, TypeScript, Postgr
 1. `cd api && npm install`
 2. Copy `.env.example` to `.env` and add your PostgreSQL connection string
 3. `npx prisma migrate dev`
-4. `npx prisma db seed`
+4. `npm run seed`
 5. `npm run start:dev`
 
 ## Schema Decisions
