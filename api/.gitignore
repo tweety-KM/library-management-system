@@ -59,3 +59,10 @@ pids
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 /generated/prisma
+
+# AI tool config
+.agents/
+.claude/
+.cursor/
+.devin/
+AGENTS.md
