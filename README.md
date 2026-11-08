@@ -25,3 +25,10 @@ be stored, which prepares for role-based Guards in Week 2.
 
 **Unique fields.** `isbn`, `Genre.name`, `Genre.slug` and `User.email` are unique to
 prevent duplicates.
+
+## Required Files
+
+- [api/prisma/schema.prisma](api/prisma/schema.prisma): Role enum, User, Genre, Book with genreId @relation
+- [api/prisma/seed.ts](api/prisma/seed.ts): 5 genres and 20 books
+- [api/src/prisma/prisma.service.ts](api/src/prisma/prisma.service.ts): extends PrismaClient, implements OnModuleInit, calls this.$connect()
+- [api/.env.example](api/.env.example): DATABASE_URL placeholder only
