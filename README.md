@@ -1,34 +1,35 @@
-# Library Management System
+## Week 2: Book API, Auth & Authorization
 
-A full-stack library management app built with React, NestJS, TypeScript, PostgreSQL and Prisma.
+### Running it
 
-## Setup (api)
 1. `cd api && npm install`
-2. Copy `.env.example` to `.env` and add your PostgreSQL connection string
-3. `npx prisma migrate dev`
-4. `npm run seed`
-5. `npm run start:dev`
+2. Copy `.env.example` to `.env` and fill in `DATABASE_URL` and `JWT_SECRET`
+3. `npx prisma migrate deploy` then `npx prisma db seed`
+4. `npm run start:dev` (API on http://localhost:3000)
 
-## Schema Decisions
+**Seeded librarian account:** `librarian@library.test` / `Librarian123!`
+Anyone who registers via `POST /auth/register` gets the `PATRON` role.
 
-**Why Book references Genre instead of embedding it.**
-Book stores a `genreId` foreign key pointing to a row in the Genre table rather than
-copying the genre's details inside each book. Genres are shared: many books belong
-to one genre. Storing the genre once means a rename (e.g. "Sci-Fi" to "Science Fiction")
-is a single update that every book reflects, rather than editing hundreds of copies that
-could fall out of sync. The foreign key also lets PostgreSQL enforce integrity, so a
-book cannot point to a genre that doesn't exist, and it makes queries like "all books
-in genre 2" fast and simple. Prisma's `@relation` keeps this typed in TypeScript.
+### Endpoints
 
-**Role enum.** `User.role` uses a `Role` enum (PATRON, LIBRARIAN) so only valid roles can
-be stored, which prepares for role-based Guards in Week 2.
+| Method | Route | Access |
+|--------|-------|--------|
+| POST | `/auth/register` | Public |
+| POST | `/auth/login` | Public, returns `access_token` |
+| GET | `/genres`, `/genres/:id` | Public |
+| POST / PATCH / DELETE | `/genres`, `/genres/:id` | Librarian only |
+| GET | `/books` | Public; supports `genreId`, `search` (title/author), `page`, `limit` |
+| GET | `/books/:id` | Public |
+| POST / PATCH / DELETE | `/books`, `/books/:id` | Librarian only |
 
-**Unique fields.** `isbn`, `Genre.name`, `Genre.slug` and `User.email` are unique to
-prevent duplicates.
+### How it fits together
 
-## Required Files
+- **Validation:** DTOs use class-validator and a global `ValidationPipe({ whitelist: true })`, so invalid bodies return 400 and unknown fields are stripped.
+- **Auth:** passwords are hashed with bcrypt; login issues a JWT (`sub` = user id, `role`); `JwtStrategy` verifies it on protected routes.
+- **Authorization:** `JwtAuthGuard` runs first, then `RolesGuard` checks `req.user.role` against `@Roles('LIBRARIAN')`. No token gives 401; a patron token gives 403.
+- **Errors:** Nest's built-in exceptions (404 missing record, 409 duplicate ISBN/genre or genre still has books).
+- **Stock:** a new book starts with `availableCopies` equal to `totalCopies`.
 
-- [api/prisma/schema.prisma](api/prisma/schema.prisma): Role enum, User, Genre, Book with genreId @relation
-- [api/prisma/seed.ts](api/prisma/seed.ts): 5 genres and 20 books
-- [api/src/prisma/prisma.service.ts](api/src/prisma/prisma.service.ts): extends PrismaClient, implements OnModuleInit, calls this.$connect()
-- [api/.env.example](api/.env.example): DATABASE_URL placeholder only
+### Postman
+
+Import `docs/postman_collection.json`, run **Login (librarian)** first (it saves the token), then the guarded requests.
