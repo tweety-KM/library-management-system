@@ -1,0 +1,187 @@
+{
+  "info": {
+    "name": "Library Management System API",
+    "description": "Week 2: Genres, Books, Auth. Run 'Login (librarian)' first; it saves the token for the guarded requests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "token", "value": "" },
+    { "key": "genreId", "value": "" },
+    { "key": "bookId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register (patron)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Test Patron\",\n  \"email\": \"patron2@test.com\",\n  \"password\": \"Password123!\"\n}" },
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] }
+          }
+        },
+        {
+          "name": "Login (librarian)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.collectionVariables.set('token', pm.response.json().access_token);"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"librarian@library.test\",\n  \"password\": \"Librarian123!\"\n}" },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Login (patron)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.collectionVariables.set('token', pm.response.json().access_token);"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"patron2@test.com\",\n  \"password\": \"Password123!\"\n}" },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Genres",
+      "item": [
+        {
+          "name": "Get all genres",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/genres", "host": ["{{baseUrl}}"], "path": ["genres"] }
+          }
+        },
+        {
+          "name": "Get genre by id",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/genres/1", "host": ["{{baseUrl}}"], "path": ["genres", "1"] }
+          }
+        },
+        {
+          "name": "Create genre (librarian)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.collectionVariables.set('genreId', pm.response.json().id);"]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Poetry\"\n}" },
+            "url": { "raw": "{{baseUrl}}/genres", "host": ["{{baseUrl}}"], "path": ["genres"] }
+          }
+        },
+        {
+          "name": "Update genre (librarian)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Poems\",\n  \"slug\": \"poems\"\n}" },
+            "url": { "raw": "{{baseUrl}}/genres/{{genreId}}", "host": ["{{baseUrl}}"], "path": ["genres", "{{genreId}}"] }
+          }
+        },
+        {
+          "name": "Delete genre (librarian)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/genres/{{genreId}}", "host": ["{{baseUrl}}"], "path": ["genres", "{{genreId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Books",
+      "item": [
+        {
+          "name": "Get books (filter, search, pagination)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/books?genreId=1&search=the&page=1&limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["books"],
+              "query": [
+                { "key": "genreId", "value": "1" },
+                { "key": "search", "value": "the" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "5" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get book by id",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/books/1", "host": ["{{baseUrl}}"], "path": ["books", "1"] }
+          }
+        },
+        {
+          "name": "Create book (librarian)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.collectionVariables.set('bookId', pm.response.json().id);"]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Postman Test Book\",\n  \"author\": \"Test Author\",\n  \"isbn\": \"9780000000002\",\n  \"totalCopies\": 2,\n  \"genreId\": 1\n}" },
+            "url": { "raw": "{{baseUrl}}/books", "host": ["{{baseUrl}}"], "path": ["books"] }
+          }
+        },
+        {
+          "name": "Update book (librarian)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Postman Test Book (Updated)\"\n}" },
+            "url": { "raw": "{{baseUrl}}/books/{{bookId}}", "host": ["{{baseUrl}}"], "path": ["books", "{{bookId}}"] }
+          }
+        },
+        {
+          "name": "Delete book (librarian)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/books/{{bookId}}", "host": ["{{baseUrl}}"], "path": ["books", "{{bookId}}"] }
+          }
+        }
+      ]
+    }
+  ]
+}
