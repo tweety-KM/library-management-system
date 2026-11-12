@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBookDto } from './dto/create-book.dto';
 import { UpdateBookDto } from './dto/update-book.dto';
@@ -42,7 +47,9 @@ export class BooksService {
     const genre = await this.prisma.genre.findUnique({ where: { id: dto.genreId } });
     if (!genre) throw new NotFoundException(`Genre ${dto.genreId} not found`);
     try {
-      return await this.prisma.book.create({ data: dto });
+      return await this.prisma.book.create({
+        data: { ...dto, availableCopies: dto.totalCopies },
+      });
     } catch (e: any) {
       if (e.code === 'P2002') throw new ConflictException('A book with this ISBN already exists');
       throw e;
@@ -50,8 +57,25 @@ export class BooksService {
   }
 
   async update(id: number, dto: UpdateBookDto) {
-    await this.findOne(id);
-    return this.prisma.book.update({ where: { id }, data: dto });
+    const book = await this.findOne(id);
+
+    const data: UpdateBookDto & { availableCopies?: number } = { ...dto };
+    if (dto.totalCopies !== undefined) {
+      const onLoan = book.totalCopies - book.availableCopies;
+      if (dto.totalCopies < onLoan) {
+        throw new BadRequestException(
+          `Cannot set totalCopies below the ${onLoan} copies currently on loan`,
+        );
+      }
+      data.availableCopies = dto.totalCopies - onLoan;
+    }
+
+    try {
+      return await this.prisma.book.update({ where: { id }, data });
+    } catch (e: any) {
+      if (e.code === 'P2002') throw new ConflictException('A book with this ISBN already exists');
+      throw e;
+    }
   }
 
   async remove(id: number) {
