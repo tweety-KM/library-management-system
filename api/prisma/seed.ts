@@ -1,3 +1,5 @@
+import 'dotenv/config';
+import * as bcrypt from 'bcrypt';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -64,7 +66,18 @@ async function main() {
     });
   }
 
-  console.log('Seeded 5 genres and 20 books');
+  await prisma.user.upsert({
+    where: { email: 'librarian@library.test' },
+    update: {},
+    create: {
+      name: 'Head Librarian',
+      email: 'librarian@library.test',
+      password: await bcrypt.hash('Librarian123!', 10),
+      role: 'LIBRARIAN',
+    },
+  });
+
+  console.log('Seeded 5 genres, 20 books and 1 librarian account');
 }
 
 main()
